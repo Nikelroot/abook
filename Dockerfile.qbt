@@ -1,0 +1,28 @@
+FROM node:24.13.0
+
+# RUN apt-get update && apt-get install -y tzdata
+# RUN echo "Asia/Yekaterinburg" > /etc/timezone
+# RUN dpkg-reconfigure -f noninteractive tzdata
+
+# WORKDIR /usr/app
+# COPY ./utils utils
+
+WORKDIR /usr/app
+RUN mkdir /usr/app/models
+RUN mkdir /usr/app/utils
+RUN mkdir /usr/app/logs
+
+
+RUN mkdir /usr/app/qbt
+WORKDIR /usr/app/qbt
+COPY  ./qbt/package.json .
+RUN npm install
+
+WORKDIR /usr/app/qbt
+COPY  ./qbt/. .
+
+
+# EXPOSE 3031
+
+WORKDIR /usr/app/qbt
+CMD ["npm","run", "start"]

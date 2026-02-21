@@ -1,0 +1,30 @@
+FROM node:24.13.0
+
+# RUN apt-get update && apt-get install -y tzdata
+# RUN echo "Asia/Yekaterinburg" > /etc/timezone
+# RUN dpkg-reconfigure -f noninteractive tzdata
+
+# WORKDIR /usr/app
+# COPY ./utils utils
+
+WORKDIR /usr/app
+RUN mkdir /usr/app/models
+RUN mkdir /usr/app/logs
+# RUN mkdir /usr/app/fetcher
+# RUN mkdir /usr/app/socket
+
+
+# WORKDIR /usr/app
+RUN mkdir /usr/app/parser
+WORKDIR /usr/app/parser
+COPY  ./parser/package.json .
+RUN npm install
+
+WORKDIR /usr/app/parser
+COPY  ./parser/. .
+
+
+# EXPOSE 3031
+
+WORKDIR /usr/app/parser
+CMD ["npm","run", "link"]

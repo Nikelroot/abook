@@ -1,0 +1,185 @@
+services:
+  abook_vless:
+    image: teddysun/xray:latest
+
+    container_name: abook_vless
+    environment:
+      - TZ=Asia/Yekaterinburg
+    volumes:
+      - ./config.json:/etc/xray/config.json
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    networks:
+      - abook
+
+  mongo_abook:
+    image: mongo:8.0.17
+    container_name: mongo_abook
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=nikelroot
+      - MONGO_INITDB_ROOT_PASSWORD=48151623MongoDB42
+      - NODE_ENV=production
+      - TZ=Asia/Yekaterinburg
+    command: [
+        'mongod',
+        '--bind_ip_all',
+        '--wiredTigerCacheSizeGB=3', # ~25–35% от лимита памяти
+        '--setParameter=ttlMonitorSleepSecs=60' # реже будить TTL-монитор (опционально)
+      ]
+    volumes:
+      - ./base/a_db7:/data/db
+    #      - /etc/localtime:/etc/localtime:ro
+    #      - /etc/timezone:/etc/timezone:ro
+    restart: always
+    networks:
+      abook:
+      main:
+        ipv4_address: 192.168.28.11
+        mac_address: 3e:2f:83:b2:5b:ef
+    mem_limit: 1g # лимит памяти контейнера
+    memswap_limit: 1g # запретить уходить в своп
+    ulimits:
+      nofile:
+        soft: 64000
+        hard: 64000
+
+  abook_api:
+    container_name: abook_api
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    image: abook_api_iso
+    environment:
+      - TZ=Asia/Yekaterinburg
+    env_file:
+      - ./api/.env
+    restart: unless-stopped
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/W/projects/abook/models:/usr/app/models:ro
+      - /mnt/Z/logs/abook_api:/usr/app/logs
+      - /mnt/W/projects/auth/utils/index.js:/usr/app/api/auth.js
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.abookapi.rule=Host(`abook.nikelroot.ru`) && PathPrefix(`/api`)'
+      - 'traefik.http.routers.abookapi.entrypoints=websecure'
+      - 'traefik.http.routers.abookapi.tls=true'
+      - 'traefik.http.routers.abookapi.tls.certresolver=mytlschallenge'
+      - 'traefik.http.services.abookapi.loadbalancer.server.port=3001'
+
+      - 'traefik.http.middlewares.abookapi-strip.stripprefix.prefixes=/api'
+      - 'traefik.http.routers.abookapi.middlewares=abookapi-strip@docker'
+    networks:
+      - traefik
+      - abook
+
+  abook_web:
+    image: abook_web_iso
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: abook_web
+    restart: unless-stopped
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.abookweb.rule=Host(`abook.nikelroot.ru`) && !PathPrefix(`/api`)'
+      - 'traefik.http.routers.abookweb.entrypoints=websecure'
+      - 'traefik.http.routers.abookweb.tls=true'
+      - 'traefik.http.routers.abookweb.tls.certresolver=mytlschallenge'
+      - 'traefik.http.services.abookweb.loadbalancer.server.port=3000'
+    environment:
+      - TZ=Asia/Yekaterinburg
+      - NODE_ENV=production
+    networks:
+      - traefik
+      - abook
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  abook_parser:
+    container_name: abook_parser
+    build:
+      context: .
+      dockerfile: Dockerfile.parser
+    image: abook_parser_iso
+    environment:
+      - TZ=Asia/Yekaterinburg
+    restart: unless-stopped
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/W/projects/abook/models:/usr/app/models:ro
+      - /mnt/Z/logs/abook_parser:/usr/app/logs
+    networks:
+      - abook
+
+  abook_parser_link:
+    container_name: abook_parser_link
+    build:
+      context: .
+      dockerfile: Dockerfile.parser_link
+    image: abook_parser_link_iso
+    environment:
+      - TZ=Asia/Yekaterinburg
+    restart: unless-stopped
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/W/projects/abook/models:/usr/app/models:ro
+      - /mnt/Z/logs/abook_parser:/usr/app/logs
+    networks:
+      - abook
+
+  qbook_qbt:
+    container_name: qbook_qbt
+    build:
+      context: .
+      dockerfile: Dockerfile.qbt
+    image: qbook_qbt_iso
+    environment:
+      - TZ=Asia/Yekaterinburg
+    restart: unless-stopped
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/W/projects/abook/models:/usr/app/models:ro
+      - /mnt/W/projects/abook/api/utils:/usr/app/utils:ro
+      - /mnt/Z/logs/abook_parser:/usr/app/logs
+    networks:
+      - abook
+
+  abook_qbittorrent:
+    image: linuxserver/qbittorrent:latest
+    container_name: abook_qbittorrent
+    ports:
+      - 9999:9999
+      - 56802:56802/tcp
+      - 56802:56802/udp
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - WEBUI_PORT=9999
+      - NODE_ENV=production
+      - TZ=Asia/Yekaterinburg
+    networks:
+      abook: {}
+      main:
+        ipv4_address: 192.168.28.15
+        mac_address: e6:9d:6f:f1:38:f8
+    volumes:
+      - ./torrents/qData:/config
+      - /mnt/E/downloads:/downloads
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+
+networks:
+  main:
+    external: true
+  abook:
+    external: true
+  traefik:
+    external: true

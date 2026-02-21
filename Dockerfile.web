@@ -1,0 +1,41 @@
+# syntax=docker/dockerfile:1.7
+
+# ---------- base ----------
+FROM oven/bun:1-alpine AS base
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# ---------- builder ----------
+FROM base AS builder
+
+# bun lock: предпочитаем bun.lockb (или bun.lock, если у тебя текстовый)
+COPY web/package.json web/bun.lockb* web/bun.lock* ./
+
+# Устанавливаем зависимости (для сборки Next нужны devDeps)
+RUN --mount=type=cache,id=bun-cache,target=/root/.bun/install/cache \
+    bun install
+
+# Исходники
+COPY web/ ./
+
+# Кэшируем next/swc
+RUN --mount=type=cache,target=/app/.next/cache \
+    bun run build
+
+# ---------- runner ----------
+FROM oven/bun:1-alpine AS runner
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
+WORKDIR /app
+RUN apk add --no-cache libc6-compat
+
+# Standalone output
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+# (опционально) если у тебя в next config включён output: 'standalone',
+# server.js уже будет тут в корне из standalone.
+
+EXPOSE 3000
+CMD ["node", "server.js"]

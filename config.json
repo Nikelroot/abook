@@ -1,0 +1,97 @@
+{
+  "dns": {
+    "hosts": {},
+    "queryStrategy": "UseIPv4",
+    "servers": [
+      {
+        "tag": "doh-google",
+        "address": "https://dns.google/dns-query",
+        "detour": "vless-reality"
+      }
+    ]
+  },
+  "inbounds": [
+    {
+      "tag": "socks-in",
+      "port": 1080,
+      "listen": "0.0.0.0",
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true,
+        "ip": "0.0.0.0",
+        "allowTransparent": true
+      },
+      "sniffing": {
+        "enabled": true,
+        "routeOnly": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
+      }
+    },
+    {
+      "tag": "http-in",
+      "port": 8118,
+      "listen": "0.0.0.0",
+      "protocol": "http",
+      "sniffing": {
+        "enabled": true,
+        "routeOnly": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "vless-reality",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "server.nikelroot.ru",
+            "port": 443,
+            "users": [
+              {
+                "id": "1b4a3228-bdff-4f5e-b738-b888e2e73ef2",
+                "flow": "xtls-rprx-vision",
+                "encryption": "none",
+                "level": 0
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "publicKey": "nSAXA4CJcY-say6S34kBlOgrsfvfWTF8_p3RFc5jyxU",
+          "fingerprint": "chrome",
+          "serverName": "google.com",
+          "shortId": "cef7add2983fc5ce",
+          "spiderX": "/"
+        }
+      }
+    },
+    {
+      "tag": "direct",
+      "protocol": "freedom"
+    },
+    {
+      "tag": "block",
+      "protocol": "blackhole",
+      "settings": {
+        "response": {
+          "type": "http"
+        }
+      }
+    }
+  ]
+}
