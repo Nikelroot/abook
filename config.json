@@ -56,7 +56,7 @@
         "vnext": [
           {
             "address": "server.nikelroot.ru",
-            "port": 443,
+            "port": 38431,
             "users": [
               {
                 "id": "1b4a3228-bdff-4f5e-b738-b888e2e73ef2",
