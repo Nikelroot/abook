@@ -133,6 +133,23 @@ services:
     networks:
       - abook
 
+  abook_parser_metadata:
+    container_name: abook_parser_metadata
+    build:
+      context: .
+      dockerfile: Dockerfile.parser_metadata
+    image: abook_parser_metadata_iso
+    environment:
+      - TZ=Asia/Yekaterinburg
+    restart: 'no'
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/W/projects/abook/models:/usr/app/models:ro
+      - /mnt/Z/logs/abook_parser:/usr/app/logs
+    networks:
+      - abook
+
   qbook_qbt:
     container_name: qbook_qbt
     build:

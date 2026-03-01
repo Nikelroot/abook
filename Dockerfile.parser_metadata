@@ -1,0 +1,15 @@
+FROM node:24.13.0
+
+WORKDIR /usr/app
+RUN mkdir /usr/app/models
+RUN mkdir /usr/app/logs
+
+RUN mkdir /usr/app/parser
+WORKDIR /usr/app/parser
+COPY ./parser/package.json .
+RUN npm install
+
+WORKDIR /usr/app/parser
+COPY ./parser/. .
+
+CMD ["npm", "run", "metadata"]
