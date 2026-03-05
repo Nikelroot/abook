@@ -53,7 +53,7 @@ services:
     environment:
       - TZ=Asia/Yekaterinburg
     env_file:
-      - ./api/.env
+      - /mnt/W/projects/.env
     restart: unless-stopped
     volumes:
       - /etc/localtime:/etc/localtime:ro
@@ -92,8 +92,8 @@ services:
     environment:
       - TZ=Asia/Yekaterinburg
       - NODE_ENV=production
-      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME}
-      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
+    env_file:
+      - /mnt/W/projects/.env
     networks:
       - traefik
       - abook
