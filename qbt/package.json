@@ -11,6 +11,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "async": "^3.2.6"
+    "async": "^3.2.6",
+    "winston": "^3.18.3"
   }
 }

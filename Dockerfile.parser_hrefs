@@ -6,12 +6,10 @@ RUN mkdir /usr/app/logs
 
 RUN mkdir /usr/app/parser
 WORKDIR /usr/app/parser
-COPY  ./parser/package.json .
+COPY ./parser/package.json .
 RUN npm install
 
 WORKDIR /usr/app/parser
-COPY  ./parser/. .
+COPY ./parser/. .
 
-
-WORKDIR /usr/app/parser
-CMD ["npm","run", "start"]
+CMD ["npm", "run", "hrefs"]

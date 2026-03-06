@@ -7,6 +7,7 @@ services:
       - TZ=Asia/Yekaterinburg
     volumes:
       - ./config.json:/etc/xray/config.json
+      - /mnt/Z/logs/abook_vless:/var/log/xray
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
@@ -25,7 +26,10 @@ services:
         'mongod',
         '--bind_ip_all',
         '--wiredTigerCacheSizeGB=3', # ~25–35% от лимита памяти
-        '--setParameter=ttlMonitorSleepSecs=60' # реже будить TTL-монитор (опционально)
+        '--setParameter=ttlMonitorSleepSecs=60', # реже будить TTL-монитор (опционально)
+        '--logpath',
+        '/var/log/mongodb/mongod.log',
+        '--logappend'
       ]
     volumes:
       - ./base/a_db7:/data/db
@@ -100,6 +104,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
+      - /mnt/Z/logs/abook_web:/usr/app/logs
 
   abook_parser:
     container_name: abook_parser
@@ -151,6 +156,24 @@ services:
       - /mnt/Z/logs/abook_parser:/usr/app/logs
     networks:
       - abook
+      - n8n
+
+  abook_parser_hrefs:
+    container_name: abook_parser_hrefs
+    build:
+      context: .
+      dockerfile: Dockerfile.parser_hrefs
+    image: abook_parser_hrefs_iso
+    environment:
+      - TZ=Asia/Yekaterinburg
+    restart: 'no'
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/W/projects/abook/models:/usr/app/models:ro
+      - /mnt/Z/logs/abook_parser:/usr/app/logs
+    networks:
+      - abook
 
   qbook_qbt:
     container_name: qbook_qbt
@@ -166,7 +189,7 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /mnt/W/projects/abook/models:/usr/app/models:ro
       - /mnt/W/projects/abook/api/utils:/usr/app/utils:ro
-      - /mnt/Z/logs/abook_parser:/usr/app/logs
+      - /mnt/Z/logs/abook_qbt:/usr/app/logs
     networks:
       - abook
 
@@ -190,6 +213,7 @@ services:
         mac_address: e6:9d:6f:f1:38:f8
     volumes:
       - ./torrents/qData:/config
+      - /mnt/Z/logs/abook_qbittorrent:/config/qBittorrent/logs
       - /mnt/E/downloads:/downloads
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
@@ -201,4 +225,6 @@ networks:
   abook:
     external: true
   traefik:
+    external: true
+  n8n:
     external: true

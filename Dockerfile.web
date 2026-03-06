@@ -33,9 +33,10 @@ RUN apk add --no-cache libc6-compat
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/start-logged.cjs ./start-logged.cjs
 
 # (опционально) если у тебя в next config включён output: 'standalone',
 # server.js уже будет тут в корне из standalone.
 
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["node", "start-logged.cjs"]
